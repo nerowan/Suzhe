@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>终极答案 - 霓虹版</title>
+  <style>
+    /* 通用重置与字体 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Microsoft YaHei", sans-serif;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      color: #fff;
+      overflow: hidden; /* 无滚动条 */
+    }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* 霓虹/赛博风背景：渐变条纹+滚动 */
+    body::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        45deg,
+        rgba(0, 255, 188, 0.15) 0  , 
+        rgba(0, 255, 188, 0.15) 10px,
+        transparent              10px,
+        transparent              20px
+      );
+      z-index: -2;
+      animation: moveBg 6s linear infinite;
+      opacity: 0.8;
+    }
+    @keyframes moveBg {
+      0%   { transform: translate(0, 0); }
+      100% { transform: translate(-50px, -50px); }
+    }
+    /* 叠加一个深色渐变 */
+    body::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, #0a0a0a, #000 80%);
+      opacity: 0.8;
+      z-index: -1;
+    }
+
+    /* 容器UI */
+    .container {
+      width: 90%;
+      max-width: 420px;
+      background: rgba(0, 255, 188, 0.07);
+      border: 1px solid rgba(0, 255, 188, 0.3);
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,255,188,0.2);
+      padding: 20px;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+      backdrop-filter: blur(6px);
+    }
+    h1 {
+      margin-bottom: 15px;
+      font-size: 1.4rem;
+      letter-spacing: 2px;
+      color: #00ffbc;
+      text-shadow: 0 0 5px rgba(0,255,188,0.5);
+    }
+    p {
+      margin-bottom: 15px;
+      line-height: 1.6;
+      opacity: 0.85;
+    }
+    .input-group {
+      margin-bottom: 15px;
+    }
+    .input-group input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid rgba(0,255,188,0.3);
+      border-radius: 4px;
+      outline: none;
+      background: rgba(0,0,0,0.3);
+      color: #fff;
+      font-size: 1rem;
+    }
+    .input-group input:focus {
+      box-shadow: 0 0 8px rgba(0,255,188,0.5);
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+      background: linear-gradient(135deg, #005f4f, #00ffaa);
+      color: #000;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+    button:hover {
+      transform: scale(1.05);
+    }
+
+    /* 两个全屏覆盖的视频 */
+    video {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; 
+      height: 100%;
+      object-fit: cover;
+      z-index: 999; 
+      background: #000;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        max-width: 340px;
+        padding: 16px;
+      }
+      h1 { font-size: 1.2rem; }
+    }
+    @media (min-width: 769px) and (max-width: 1023px) {
+      .container {
+        max-width: 420px;
+        padding: 20px;
+      }
+      h1 { font-size: 1.3rem; }
+    }
+    @media (min-width: 1024px) {
+      .container {
+        max-width: 500px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 答错时播放的全屏视频 -->
+<video id="failVideo" autoplay muted playsinline></video>
+<!-- 答对时播放的全屏视频 -->
+<video id="successVideo" autoplay muted playsinline></video>
+
+<div class="container" id="submitContainer">
+  <h1>终极答案提交（霓虹风）</h1>
+  <p>答案正确时播放 <strong>success2.mp4</strong>，错误时播放 <strong>fail2.mp4</strong>。</p>
+  <div class="input-group">
+    <input type="text" id="finalAnswer" placeholder="输入你的答案...">
+  </div>
+  <button onclick="submitAnswer()">提 交</button>
+</div>
+
+<script>
+/* 
+  1) 设定正确答案 "TRIUMPH"，可修改
+  2) 本地文件 fail2.mp4 / success2.mp4
+*/
+const CORRECT_ANSWER = "TRIUMPH";
+const failVideo   = document.getElementById("failVideo");
+const successVideo= document.getElementById("successVideo");
+
+// 指定视频文件名
+failVideo.src    = "fail2.mp4";    
+successVideo.src = "success2.mp4";
+
+function submitAnswer(){
+  const ans = document.getElementById("finalAnswer").value.trim().toUpperCase();
+  // 隐藏输入区
+  document.getElementById("submitContainer").style.display = "none";
+
+  if(ans === CORRECT_ANSWER){
+    playSuccess();
+  } else {
+    playFail();
+  }
+}
+
+/* 播放失败视频 */
+function playFail(){
+  failVideo.style.display = "block";
+  failVideo.currentTime   = 0;
+  failVideo.play().catch(err => {
+    console.log("自动播放被阻止:", err);
+  });
+  // 播放结束后再次显示输入区（可注释去掉）
+  failVideo.onended = () => {
+    failVideo.style.display = "none";
+    document.getElementById("submitContainer").style.display = "block";
+  };
+}
+
+/* 播放成功视频 */
+function playSuccess(){
+  successVideo.style.display = "block";
+  successVideo.currentTime   = 0;
+  successVideo.play().catch(err => {
+    console.log("自动播放被阻止:", err);
+  });
+  // 播放结束后处理逻辑
+  successVideo.onended = () => {
+    successVideo.style.display = "none";
+    // 可在此跳转到下一页或不再显示输入区
+  };
+}
+</script>
+
+</body>
+</html>
